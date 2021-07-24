@@ -1,4 +1,4 @@
-# WakaTime for Visual Studio Code
+# WakaTime for Azure Data Studio
 
 [![Build Status](https://travis-ci.com/wakatime/vscode-wakatime.png?branch=master)](https://travis-ci.com/wakatime/vscode-wakatime)
 ![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/WakaTime.vscode-wakatime.png?label=Visual%20Studio%20Marketplace)
@@ -15,13 +15,19 @@
 
     ![type wakatime](./images/type-wakatime.png)
 
-3. Restart Visual Studio Code.
+3. Download the latest version to a local folder.
 
-4. Enter your [api key](https://wakatime.com/settings?apikey=true), then press `enter`.
+4. Click in three dots on the upper right corner then Install from VSIX...
+
+    ![install from VSIX](./images/ads-install.png)
+
+5. Restart Azure Data Studio.
+
+6. Enter your [api key](https://wakatime.com/settings?apikey=true), then press `enter`.
 
     > (If you’re not prompted, press `F1` or `⌘ + Shift + P` then type `WakaTime API Key`.)
 
-5. Use VSCode and your coding activity will be displayed on your [WakaTime dashboard](https://wakatime.com)
+7. Use Azure Data Studio and your coding activity will be displayed on your [WakaTime dashboard](https://wakatime.com)
 
 ## Usage
 
