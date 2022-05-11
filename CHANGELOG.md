@@ -1,6 +1,62 @@
 
 # Changelog
 
+## 18.1.4 (2022-05-11)
+
+- Pass project folder to wakatime-cli.
+
+## 18.1.3 (2022-05-11)
+
+- Prevent updating status bar to undefined.
+  [#273](https://github.com/wakatime/vscode-wakatime/issues/273)
+
+## 18.1.2 (2022-04-29)
+
+- Create symlink to wakatime-cli for consistency with other wakatime plugins.
+
+## 18.1.1 (2022-04-21)
+
+- Remove reference to window in web extension.
+  [#269](https://github.com/wakatime/vscode-wakatime/issues/269)
+
+## 18.1.0 (2022-04-08)
+
+- Track time spent on unsaved sql queries in Azure Data Studio.
+  [#266](https://github.com/wakatime/vscode-wakatime/issues/266)
+
+## 18.0.11 (2022-04-05)
+
+- Upgrade vscode engine to v1.59.0.
+
+## 18.0.10 (2022-04-05)
+
+- Downgrade vscode engine to support Azure Data Studio.
+
+## 18.0.9 (2022-04-05)
+
+- Append random string to wakatime-cli.zip to prevent file name collision when two workspaces open at same time.
+  [#268](https://github.com/wakatime/vscode-wakatime/issues/268)
+
+## 18.0.8 (2022-03-21)
+
+- Display code time in status bar tooltip when status_bar_coding_activity set to false.
+  [#265](https://github.com/wakatime/vscode-wakatime/issues/265)
+
+## 18.0.7 (2022-03-06)
+
+- Display error message when Defender prevents WakaTime from reading api key.
+  [#251](https://github.com/wakatime/vscode-wakatime/issues/251)
+
+## 18.0.6 (2022-02-17)
+
+- Verbose logging around reading api key when debug enabled.
+  [#251](https://github.com/wakatime/vscode-wakatime/issues/251)
+
+## 18.0.5 (2022-02-02)
+
+- Stop expiring api key in-memory cache and always pass api key to wakatime-cli.
+  [#256](https://github.com/wakatime/vscode-wakatime/issues/256)
+
 ## 18.0.4 (2022-01-05)
 
 - Prevent using empty cached wakatime-cli version.

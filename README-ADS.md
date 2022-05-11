@@ -1,8 +1,8 @@
-# WakaTime for Visual Studio Code
+# WakaTime for Azure Data Studio
 
 [![Tests](https://img.shields.io/github/workflow/status/wakatime/vscode-wakatime/Tests/master?label=tests)](https://github.com/wakatime/vscode-wakatime/actions)
-[![Version](https://img.shields.io/visual-studio-marketplace/v/WakaTime.vscode-wakatime.png?label=Visual%20Studio%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=WakaTime.vscode-wakatime)
-[![WakaTime](https://wakatime.com/badge/github/wakatime/vscode-wakatime.png?branch=master)](https://wakatime.com/badge/github/wakatime/vscode-wakatime)
+![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/WakaTime.vscode-wakatime.png?label=Visual%20Studio%20Marketplace)
+[![Coding time tracker](https://wakatime.com/badge/github/wakatime/vscode-wakatime.png?branch=master)](https://wakatime.com/badge/github/wakatime/vscode-wakatime)
 
 [WakaTime][wakatime] is an open source VS Code plugin for metrics, insights, and time tracking automatically generated from your programming activity.
 
@@ -10,22 +10,28 @@
 
 1. Press `F1` or `⌘ + Shift + P` and type `install`. Pick `Extensions: Install Extension`.
 
-    ![type install](./images/type-install.png)
+    ![type install](https://raw.githubusercontent.com/wakatime/vscode-wakatime/master/images/type-install.png)
 2. Type `wakatime` and hit `enter`.
 
-    ![type wakatime](./images/type-wakatime.png)
+    ![type wakatime](https://raw.githubusercontent.com/wakatime/vscode-wakatime/master/images/type-wakatime.png)
 
-3. Enter your [api key][api key], then press `enter`.
+3. Download the latest version to a local folder.
+
+4. Click in three dots on the upper right corner then Install from VSIX...
+
+    ![install from VSIX](https://raw.githubusercontent.com/wakatime/vscode-wakatime/master/images/ads-install.png)
+
+5. Enter your [api key](https://wakatime.com/settings?apikey=true), then press `enter`.
 
     > (If you’re not prompted, press `F1` or `⌘ + Shift + P` then type `WakaTime API Key`.)
 
-4. Use VSCode and your coding activity will be displayed on your [WakaTime dashboard](https://wakatime.com)
+6. Use Azure Data Studio and your coding activity will be displayed on your [WakaTime dashboard](https://wakatime.com)
 
 ## Usage
 
 Visit [https://wakatime.com](https://wakatime.com) to see your coding activity.
 
-![Project Overview](./images/Screen-Shot-2016-03-21.png)
+![Project Overview](https://raw.githubusercontent.com/wakatime/vscode-wakatime/master/images/Screen-Shot-2016-03-21.png)
 
 ## Configuring
 
@@ -38,8 +44,6 @@ Press `⌘ + Shift + P` then set `WakaTime: Status Bar Coding Activity` to `fals
 Extension settings are stored in the INI file at `$WAKATIME_HOME/.wakatime.cfg`.
 
 More information can be found from [wakatime-cli][wakatime-cli configs].
-
-If using an online IDE like [gitpods](https://gitpod.io/), add your [api key][api key] to global ENV key `WAKATIME_API_KEY`.
 
 Notes:
 
@@ -68,7 +72,6 @@ Press `Ctrl + Shift + X`, search for `win-ca`, press `Install`.
 For more general troubleshooting info, see the [wakatime-cli Troubleshooting Section][wakatime-cli help].
 
 [wakatime]: https://wakatime.com/vs-code
-[api key]: https://wakatime.com/api-key
 [wakatime-cli help]: https://github.com/wakatime/wakatime-cli/blob/develop/TROUBLESHOOTING.md
 [wakatime-cli configs]: https://github.com/wakatime/wakatime-cli/blob/develop/USAGE.md
 [how to debug]: https://wakatime.com/faq#debug-plugins

@@ -166,11 +166,11 @@ export class Dependencies {
       callback(this.latestCliVersion);
       return;
     }
-    this.options.getSetting('settings', 'proxy', this.options.getConfigFile(), (proxy: Setting) => {
-      this.options.getSetting('settings', 'no_ssl_verify', this.options.getConfigFile(), (noSSLVerify: Setting) => {
-        this.options.getSetting('internal', 'cli_version_last_modified', this.options.getConfigFile(true), (modified: Setting) => {
-          this.options.getSetting('internal', 'cli_version', this.options.getConfigFile(true), (version: Setting) => {
-            this.options.getSetting('settings', 'alpha', this.options.getConfigFile(), (alpha: Setting) => {
+    this.options.getSetting('settings', 'proxy', false, (proxy: Setting) => {
+      this.options.getSetting('settings', 'no_ssl_verify', false, (noSSLVerify: Setting) => {
+        this.options.getSetting('internal', 'cli_version_last_modified', true, (modified: Setting) => {
+          this.options.getSetting('internal', 'cli_version', true, (version: Setting) => {
+            this.options.getSetting('settings', 'alpha', false, (alpha: Setting) => {
               let options = {
                 url: alpha.value == 'true' ? this.githubReleasesAlphaUrl : this.githubReleasesStableUrl,
                 json: true,
@@ -178,7 +178,10 @@ export class Dependencies {
                   'User-Agent': 'github.com/wakatime/vscode-wakatime',
                 },
               };
-              if (proxy.value) options['proxy'] = proxy.value;
+              if (proxy.value) {
+                this.logger.debug(`Using Proxy: ${proxy.value}`);
+                options['proxy'] = proxy.value;
+              }
               if (noSSLVerify.value === 'true') options['strictSSL'] = false;
               if (modified.value && version.value) options['headers']['If-Modified-Since'] = modified.value;
               try {
@@ -197,7 +200,7 @@ export class Dependencies {
                       this.options.setSettings('internal', [
                         {key: 'cli_version', value: this.latestCliVersion},
                         {key: 'cli_version_last_modified', value: lastModified},
-                      ], this.options.getConfigFile(true));
+                      ], true);
                     }
                     callback(this.latestCliVersion);
                   } else {
@@ -228,7 +231,7 @@ export class Dependencies {
       }
       this.logger.debug(`Downloading wakatime-cli ${version}...`);
       const url = this.cliDownloadUrl(version);
-      let zipFile = path.join(this.getResourcesLocation(), 'wakatime-cli.zip');
+      let zipFile = path.join(this.getResourcesLocation(), 'wakatime-cli' + this.randStr() + '.zip');
       this.downloadFile(
         url,
         zipFile,
@@ -240,16 +243,40 @@ export class Dependencies {
     });
   }
 
+  private isSymlink(file: string): boolean {
+    try {
+      return fs.lstatSync(file).isSymbolicLink();
+    } catch (_) {}
+    return false;
+  }
+
   private extractCli(zipFile: string, callback: () => void): void {
     this.logger.debug(`Extracting wakatime-cli into "${this.getResourcesLocation()}"...`);
     this.removeCli(() => {
       this.unzip(zipFile, this.getResourcesLocation(), () => {
         if (!Dependencies.isWindows()) {
+          const cli = this.getCliLocation();
           try {
             this.logger.debug('Chmod 755 wakatime-cli...');
-            fs.chmodSync(this.getCliLocation(), 0o755);
+            fs.chmodSync(cli, 0o755);
           } catch (e) {
             this.logger.warnException(e);
+          }
+          const ext = Dependencies.isWindows() ? '.exe' : '';
+          const link = path.join(this.getResourcesLocation(), `wakatime-cli${ext}`);
+          if (!this.isSymlink(link)) {
+            try {
+              this.logger.debug(`Create symlink from wakatime-cli to ${cli}`);
+              fs.symlinkSync(cli, link);
+            } catch (e) {
+              this.logger.warnException(e);
+              try {
+                fs.copyFileSync(cli, link);
+                fs.chmodSync(link, 0o755);
+              } catch (e2) {
+                this.logger.warnException(e2);
+              }
+            }
           }
         }
         callback();
@@ -274,10 +301,13 @@ export class Dependencies {
     callback: () => void,
     error: () => void,
   ): void {
-    this.options.getSetting('settings', 'proxy', this.options.getConfigFile(), (proxy: Setting) => {
-      this.options.getSetting('settings', 'no_ssl_verify', this.options.getConfigFile(), (noSSLVerify: Setting) => {
+    this.options.getSetting('settings', 'proxy', false, (proxy: Setting) => {
+      this.options.getSetting('settings', 'no_ssl_verify', false, (noSSLVerify: Setting) => {
         let options = { url: url };
-        if (proxy.value) options['proxy'] = proxy.value;
+        if (proxy.value) {
+          this.logger.debug(`Using Proxy: ${proxy.value}`);
+          options['proxy'] = proxy.value;
+        }
         if (noSSLVerify.value === 'true') options['strictSSL'] = false;
         try {
           let r = request.get(options);
@@ -360,8 +390,8 @@ export class Dependencies {
 
   private reportMissingPlatformSupport(osname: string, architecture: string): void {
     const url = `https://api.wakatime.com/api/v1/cli-missing?osname=${osname}&architecture=${architecture}&plugin=vscode`;
-    this.options.getSetting('settings', 'proxy', this.options.getConfigFile(), (proxy: Setting) => {
-      this.options.getSetting('settings', 'no_ssl_verify', this.options.getConfigFile(), (noSSLVerify: Setting) => {
+    this.options.getSetting('settings', 'proxy', false, (proxy: Setting) => {
+      this.options.getSetting('settings', 'no_ssl_verify', false, (noSSLVerify: Setting) => {
         let options = { url: url };
         if (proxy.value) options['proxy'] = proxy.value;
         if (noSSLVerify.value === 'true') options['strictSSL'] = false;
@@ -370,5 +400,9 @@ export class Dependencies {
         } catch (e) { }
       });
     });
+  }
+
+  private randStr(): string {
+    return (Math.random() + 1).toString(36).substring(7);
   }
 }

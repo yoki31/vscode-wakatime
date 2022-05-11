@@ -1,9 +1,10 @@
 import * as path from 'path';
 import * as fs from 'fs';
+import * as vscode from 'vscode';
 
 import { Dependencies } from './dependencies';
-import { ExpirationStrategy } from './cache/expiration-strategy';
-import { MemoryStorage } from './cache/memory-storage';
+import { Logger } from './logger';
+import { Utils } from './utils';
 
 export interface Setting {
   key: string;
@@ -15,31 +16,32 @@ export class Options {
   private configFile: string;
   private internalConfigFile: string;
   private logFile: string;
-  private readonly cache: ExpirationStrategy;
+  private logger: Logger;
+  private cache: any = {};
 
-  constructor() {
-    this.cache = new ExpirationStrategy(new MemoryStorage());
+  constructor(logger: Logger) {
     let wakaHome = Dependencies.getHomeDirectory();
     this.configFile = path.join(wakaHome, '.wakatime.cfg');
     this.internalConfigFile = path.join(wakaHome, '.wakatime-internal.cfg');
     this.logFile = path.join(wakaHome, '.wakatime.log');
+    this.logger = logger;
   }
 
   public async getSettingAsync<T = any>(section: string, key: string): Promise<T> {
     return new Promise<T>((resolve, reject) => {
-      this.getSetting(section, key, this.configFile, (setting) => {
+      this.getSetting(section, key, false, (setting) => {
         setting.error ? reject(setting.error) : resolve(setting.value);
       });
     });
   }
 
-  public getSetting(section: string, key: string, configFile: string, callback: (Setting) => void): void {
+  public getSetting(section: string, key: string, internal: boolean, callback: (Setting) => void): void {
     fs.readFile(
-      configFile,
+      this.getConfigFile(internal),
       'utf-8',
       (err: NodeJS.ErrnoException | null, content: string) => {
         if (err) {
-          if (callback) callback({error: new Error(`could not read ${this.configFile}`), key: key, value: null});
+          callback({error: new Error(`could not read ${this.getConfigFile(internal)}`), key: key, value: null});
         } else {
           let currentSection = '';
           let lines = content.split('\n');
@@ -60,14 +62,14 @@ export class Options {
             }
           }
 
-          if (callback) callback({key: key, value: null});
+          callback({key: key, value: null});
         }
       },
     );
   }
 
-  public setSetting(section: string, key: string, val: string, configFile?: string): void {
-    if (!configFile) configFile = this.configFile;
+  public setSetting(section: string, key: string, val: string, internal: boolean): void {
+    const configFile = this.getConfigFile(internal);
     fs.readFile(
       configFile,
       'utf-8',
@@ -122,8 +124,8 @@ export class Options {
     );
   }
 
-  public setSettings(section: string, settings: Setting[], configFile?: string): void {
-    if (!configFile) configFile = this.configFile;
+  public setSettings(section: string, settings: Setting[], internal: boolean): void {
+    const configFile = this.getConfigFile(internal);
     fs.readFile(
       configFile,
       'utf-8',
@@ -191,8 +193,8 @@ export class Options {
     );
   }
 
-  public getConfigFile(internal?: boolean): string {
-    return !internal ? this.configFile : this.internalConfigFile;
+  public getConfigFile(internal: boolean): string {
+    return internal ? this.internalConfigFile : this.configFile;
   }
 
   public getLogFile(): string {
@@ -201,18 +203,54 @@ export class Options {
 
   public async getApiKeyAsync(): Promise<string> {
     return new Promise<string>(async (resolve, reject) => {
-      if (process.env.WAKATIME_API_KEY) return resolve(process.env.WAKATIME_API_KEY);
+      const cachedApiKey = this.cache.api_key;
+      if (!Utils.apiKeyInvalid(cachedApiKey)) {
+        resolve(cachedApiKey);
+        return;
+      }
 
-      const cachedApiKey = await this.cache.getItem<string>('api_key');
-      if (cachedApiKey) return resolve(cachedApiKey);
+      // Support for gitpod.io https://github.com/wakatime/vscode-wakatime/pull/220
+      if (process.env.WAKATIME_API_KEY && !Utils.apiKeyInvalid(process.env.WAKATIME_API_KEY)) {
+        resolve(process.env.WAKATIME_API_KEY);
+        return;
+      }
 
-      await this.getSettingAsync<string>('settings', 'api_key')
-        .then(apiKey => {
-          this.cache.setItem('api_key', apiKey, { ttl: 300 });
-          resolve(apiKey);
-        })
-        .catch(err => reject(err));
+      try {
+        const apiKey = await this.getSettingAsync<string>('settings', 'api_key');
+        if (!Utils.apiKeyInvalid(apiKey)) this.cache.api_key = apiKey;
+        resolve(apiKey);
+      } catch(err) {
+        this.logger.debug(`Exception while reading API Key from config file: ${err}`);
+        reject(err);
+      }
     });
+  }
+
+  public getApiKey(callback: (apiKey: string|null) => void): void {
+    this.getApiKeyAsync()
+      .then(apiKey => {
+        if (!Utils.apiKeyInvalid(apiKey)) {
+          callback(apiKey);
+        } else {
+          callback(null);
+        }
+      })
+      .catch(err => {
+        this.logger.warn(`Unable to get api key: ${err}`);
+        if (`${err}`.includes('spawn EPERM')) {
+          vscode.window.showErrorMessage("Microsoft Defender is blocking WakaTime. Please allow WakaTime to run so it can upload code stats to your dashboard.");
+        }
+        callback(null);
+      });
+  }
+
+  public hasApiKey(callback: (valid: boolean) => void): void {
+    this.getApiKeyAsync()
+      .then(apiKey => callback(!Utils.apiKeyInvalid(apiKey)))
+      .catch(err => {
+        this.logger.warn(`Unable to check for api key: ${err}`);
+        callback(false);
+      });
   }
 
   private startsWith(outer: string, inner: string): boolean {

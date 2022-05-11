@@ -4,7 +4,7 @@ export class Utils {
     return str;
   }
 
-  public static validateKey(key: string): string {
+  public static apiKeyInvalid(key?: string): string {
     const err = 'Invalid api key... check https://wakatime.com/settings for your key';
     if (!key) return err;
     const re = new RegExp(
@@ -84,5 +84,10 @@ export class Utils {
       lastCmd = clone[i];
     }
     return newCmds.join(' ');
+  }
+
+  public static isUnsavedFile(file: string): boolean {
+    const re = new RegExp('^SQLQuery_[0-9]+$');
+    return re.test(file);
   }
 }
